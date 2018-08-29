@@ -46,7 +46,7 @@ def preprocess(image):
 	image = image.reshape(1, image.shape[0], image.shape[1], 1)
 	return image
 
-model = load_model("saved_models/model_updates_2d", custom_objects={'logloss': logloss, 'sumofsquares': sumofsquares})
+model = load_model("saved_models/model_updates_100", custom_objects={'logloss': logloss, 'sumofsquares': sumofsquares})
 Trade = TradeGame.Game(mode='test')
 
 currentScore = 0

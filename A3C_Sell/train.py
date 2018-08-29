@@ -7,7 +7,7 @@ from skimage import transform, color, exposure
 import keras
 from keras.models import Sequential, Model, load_model
 from keras.layers import Dense, Flatten,Input,Dropout
-from keras.layers.convolutional import Convolution2D
+from keras.layers.convolutional import Convolution2D,Conv1D
 from keras.optimizers import RMSprop,Adam
 import keras.backend as K
 from keras.utils import plot_model
@@ -64,8 +64,8 @@ def buildmodel():
 	keras.initializers.RandomUniform(minval=-0.1, maxval=0.1, seed=None)
 
 	S = Input(shape = (IMAGE_ROWS, IMAGE_COLS, IMAGE_CHANNELS, ), name = 'Input')
-	h0 = Convolution2D(64, 9, 9, subsample=(4, 4), activation='relu', kernel_initializer = 'random_uniform', bias_initializer = 'random_uniform')(S)
-	h1 = Convolution2D(64, 6, 6, subsample=(2, 2), activation='relu', kernel_initializer = 'random_uniform', bias_initializer = 'random_uniform')(h0)
+	h0 = Convolution2D(64, 3, 3, subsample=(4, 4), activation='relu', kernel_initializer = 'random_uniform', bias_initializer = 'random_uniform')(S)
+	h1 = Convolution2D(64, 3, 3, subsample=(2, 2), activation='relu', kernel_initializer = 'random_uniform', bias_initializer = 'random_uniform')(h0)
 	h2 = Convolution2D(64, 3, 3, subsample=(1, 1), activation='relu', kernel_initializer = 'random_uniform', bias_initializer = 'random_uniform')(h1)
 	h3 = Flatten()(h2)
 	h4 = Dropout(0.2)(h3)
@@ -198,7 +198,7 @@ class actorthread(threading.Thread):
 
 # initialize a new model using buildmodel() or use load_model to resume training an already trained model
 #model = buildmodel()
-model = load_model("saved_models/model_updates_100", custom_objects={'logloss': logloss, 'sumofsquares': sumofsquares})
+model = load_model("saved_models/model_updates_3050", custom_objects={'logloss': logloss, 'sumofsquares': sumofsquares})
 #plot_model(model, to_file='model.png')
 model._make_predict_function()
 graph = tf.get_default_graph()

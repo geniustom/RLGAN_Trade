@@ -5,7 +5,7 @@ import time
 from PIL import Image
 import matplotlib.pyplot as plt
 
-END_K_INDEX = 298
+END_K_INDEX = 150
 STOP_LOSE = 20 #20點停損
 TRADE_LOSE = 5 #交易成本
 DataCache={}

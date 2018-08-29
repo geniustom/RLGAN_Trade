@@ -65,13 +65,21 @@ class Game:
 		terminal=True
 		reward=0
 		if len(self.Price)>=db.END_K_INDEX : #排除K棒不足的情況
-			end_price=self.Price[db.END_K_INDEX]
+			end_price=self.Price[self.TimeIndex+30] #60分鐘後結算價
 			now_price=self.Price[self.TimeIndex]
 			if action==ACT_STAY: 
 				terminal=(self.TimeIndex>=db.END_K_INDEX)
+				if self.TimeIndex>=db.END_K_INDEX:
+					reward=-db.STOP_LOSE
 			elif action==ACT_SELL:
-				if self.SellStopLose[self.TimeIndex]>0:
-					reward=-self.SellStopLose[self.TimeIndex]-db.TRADE_LOSE
+				stoplose=0
+				for i in range (self.TimeIndex,self.TimeIndex+30):
+					if self.Price[i]-now_price>=db.STOP_LOSE:
+						stoplose=self.Price[i]-now_price
+						break
+				if stoplose>0:
+#					reward=-self.SellStopLose[self.TimeIndex]-db.TRADE_LOSE
+					reward=-stoplose-db.TRADE_LOSE
 				else:
 					reward=-(end_price-now_price)-db.TRADE_LOSE
 
