@@ -103,13 +103,13 @@ class TradeImg:
 		if rcnt>0: 
 			rr=r.GetRows(rcnt)
 			data_pr=seq_intg(seq_diff(np.array(rr[0])))
-			data_vo=seq_diff(np.array(rr[1]))
-			data_bco=seq_diff(np.array(rr[2]))					
-			data_sco=seq_diff(np.array(rr[3]))
-			data_bbi=seq_diff(np.array(rr[4]))
-			data_sbi=seq_diff(np.array(rr[5]))
-			data_bsbi=seq_diff(np.array(rr[6]))
-			data_ssbi=seq_diff(np.array(rr[7]))
+			data_vo=seq_diff(np.array(rr[1]))/4096
+			data_bco=seq_diff(np.array(rr[2]))/4096	
+			data_sco=seq_diff(np.array(rr[3]))/4096
+			data_bbi=seq_diff(np.array(rr[4]))/4096
+			data_sbi=seq_diff(np.array(rr[5]))/4096
+			data_bsbi=seq_diff(np.array(rr[6]))/4096
+			data_ssbi=seq_diff(np.array(rr[7]))/4096
 			DataCache[date]=[data_pr,data_vo,data_bco,data_sco,data_bbi,data_sbi,data_bsbi,data_ssbi]
 			sell_lose_list=np.zeros(len(data_pr))
 			for i in range(len(data_pr)):
@@ -172,13 +172,14 @@ class TradeImg:
 		return np.array(data)
         
 if __name__ == '__main__':
-	timg=TradeImg(TopN=300,run_mode='test')
+	timg=TradeImg(TopN=300,mode='test')
 	timg.prepare_data()
 
 	date="17/09/06"
 	plt.imshow(timg.ShowImg(date,300)); plt.show();
 	plt.plot(timg.GetPrice(date))
 	plt.plot(timg.GetSellStopLose(date))
+	print(timg.GetData(date,300))
 	
 
 

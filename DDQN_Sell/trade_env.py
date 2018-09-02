@@ -6,7 +6,7 @@ import numpy as np
 import lib.dblib as db
 import matplotlib.pyplot as plt
 
-RUN_DATE_COUNT = 300 #學習過去幾天的資料
+RUN_DATE_COUNT = 600 #學習過去幾天的資料
 WINDOWWIDTH = 300 # 螢幕寬度
 
 lose_cnt=[]
@@ -97,7 +97,7 @@ class TradeEnv(gym.Env):
 			plt.plot(self.Price,"g")
 			plt.plot(self.Units,"b")
 			plt.savefig("trade.png")
-			plt.cla()          
+			plt.cla()     
 			#plt.show();
 			################################################################		
 			self.Units=[]
@@ -113,8 +113,8 @@ class TradeEnv(gym.Env):
 			profit.append(points)
 			if reward>0: win+=1
 			elif reward<0: lose+=1
-            
-		if self.DateIndex == 0 and lose!=0 and win!=0:
+
+		if self.DateIndex == 0 and (lose!=0 or win!=0):
 			lose_cnt.append(lose)
 			win_cnt.append(win)
 			point_list.append(points)
