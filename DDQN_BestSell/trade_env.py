@@ -13,6 +13,8 @@ lose_cnt=[]
 win_cnt=[]
 point_list=[]
 profit=[]
+best_profit=[]
+best_points=0
 points=0
 lose=0
 win=0
@@ -40,20 +42,21 @@ def CalReward(date,pr,order_index):
 	if RewardCache.__contains__(date+str(order_index))==False:
 		best_reward,best_high_index,best_low_index=GetBestShortReward(pr,order_index)
 		np=pr[order_index]
-		reward=pr[order_index]-pr[best_low_index]-db.TRADE_LOSE
-		#到最高點之前卻被停損，reward=-1
+		reward=pr[order_index]-pr[best_low_index]
+		#到最高點之前卻被停損，reward=-停損點
 		#往後直到最佳空點與最佳回補點的中間沒有發生停損 reward>0  (不受尾盤拉高的限制)
 		for i in range (order_index,best_high_index):
 			if pr[i]-np>=db.STOP_LOSE: 
-				reward=-db.STOP_LOSE
 				stoplose=pr[i]-np
-				reward=-stoplose-db.TRADE_LOSE
+				reward=-stoplose
 				break
 		RewardCache[date+str(order_index)]=[best_reward,best_high_index,best_low_index,reward]
 	else:
 		best_reward,best_high_index,best_low_index,reward=RewardCache[date+str(order_index)]
 
-	return reward
+	reward-=db.TRADE_LOSE
+	best_reward-=db.TRADE_LOSE
+	return reward,best_reward
 
 class TradeEnv(gym.Env):
 	metadata = {
@@ -83,7 +86,6 @@ class TradeEnv(gym.Env):
 		self.Units=[]
 		self.Price=[]
 		self.Best=[]
-		self.SellStopLose=[]
 
 	def gen_cache(self):
 		import os
@@ -106,16 +108,17 @@ class TradeEnv(gym.Env):
 	def process_action(self,action):
 		terminal=True
 		reward=0
+		best_reward=0
 		if len(self.Price)>=db.END_K_INDEX : #排除K棒不足的情況
 			if action==0: 
 				terminal=(self.TimeIndex>=db.END_K_INDEX)
-				if self.TimeIndex>=db.END_K_INDEX: #不下單損失
-					reward=-db.END_K_INDEX  #-db.STOP_LOSE
+				#if self.TimeIndex>=db.END_K_INDEX: #不下單損失
+				#	reward=-db.END_K_INDEX  #-db.STOP_LOSE
 			elif action==1:
-				reward=CalReward(self.Date,self.Price,self.TimeIndex)
-				if reward>0: reward=reward/10 #相當於加強處罰以增加學習成效
+				reward,best_reward=CalReward(self.Date,self.Price,self.TimeIndex)
+				if reward>0: reward=reward#/10 #相當於加強處罰以增加學習成效
 
-		return terminal,reward
+		return terminal,reward,best_reward
 
 	def seed(self, seed=None):
 		self.np_random, seed = seeding.np_random(seed)
@@ -124,12 +127,10 @@ class TradeEnv(gym.Env):
 	def step(self, action):
 		self.Date=self.DateList[self.DateIndex]
 		self.Price=self.Trade.GetPrice(self.Date)
-		self.SellStopLose=self.Trade.GetSellStopLose(self.Date)
 
 		self.state=self.Trade.GetData(self.DateList[self.DateIndex],self.TimeIndex)
-
 		#print(action)
-		terminal,reward=self.process_action(action)
+		terminal,reward,best_reward=self.process_action(action)
 		
 		self.Units.append(self.Price[self.TimeIndex])
 		if terminal:    
@@ -152,7 +153,6 @@ class TradeEnv(gym.Env):
 			self.Units=[]
 			self.Price=[]
 			self.Best=[]
-			self.SellStopLose=[]
 			self.game_time=db.timer()
 			self.state=self.Trade.GetData(self.DateList[0],0)
 		
@@ -163,26 +163,32 @@ class TradeEnv(gym.Env):
 			self.TimeIndex=0
 		if self.DateIndex>=len(self.DateList):
 			self.DateIndex=0
-		global points,profit,win,lose,lose_cnt,win_cnt,point_list
+		
 		########################  輸出完整報表  ########################
+		global points,profit,win,lose,lose_cnt,win_cnt,point_list,best_points,best_profit
 		if terminal==True:
+			best_points+=best_reward
+			best_profit.append(best_points)
 			points+=reward
 			profit.append(points)
 			if reward>0: win+=1
 			elif reward<0: lose+=1
 
-		if self.DateIndex == 0 and (lose!=0 or win!=0):
+		if self.DateIndex == 0 and (lose!=0 or win!=0): #跑完完整的一輪時
 			lose_cnt.append(lose)
 			win_cnt.append(win)
 			point_list.append(points)
 			plt.cla()
 			plt.plot(lose_cnt,"g");plt.plot(win_cnt,"r");plt.savefig("profit_1.png");plt.show();
 			plt.plot(point_list,"b");plt.savefig("profit_2.png");plt.show();
-			plt.plot(profit,"c");plt.savefig("profit_3.png");plt.show();
+			plt.plot(profit,"c");plt.plot(best_profit,"r");plt.savefig("profit_3.png");plt.show();
+			print("best profit:",best_points,"current profit:",points)
 			lose=0
 			win=0
 			points=0
-			profit=[]   
+			best_points=0
+			profit=[]
+			best_profit=[]
 		################################################################        
 
 		return np.array(self.state), reward, terminal, {}
